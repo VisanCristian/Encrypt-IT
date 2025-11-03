@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLa
 from gui.main_ui import Ui_Dialog
 import sys
 from library.encrypt import encrypt, decrypt
-
+#
 class MyDialog(QtWidgets.QDialog):
     def __init__(self):
         super().__init__()
