@@ -1,5 +1,5 @@
 import sys
-#
+
 from PyQt5 import QtWidgets
 from gui.encryptFileNotFound import Ui_Dialog
 from gui.encryptFileAlreadyEncrypted import AlreadyEncrypted_dialog

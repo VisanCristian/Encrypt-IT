@@ -1,6 +1,6 @@
 import os
 import base64
-#
+
 from PyQt5 import QtWidgets
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
