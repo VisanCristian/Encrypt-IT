@@ -1,9 +1,15 @@
 import os
 import base64
+
+from PyQt5 import QtWidgets
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from getpass import getpass
+
+from library.generateUi import dialogManager
+
+dm = dialogManager()
 
 def generate_key(password:str, salt: bytes, iterations: int = 100000) -> bytes:
     kdf = PBKDF2HMAC(
@@ -19,41 +25,36 @@ def load_salt(saltfile):
     """Load the salt from the specified directory."""
     return open(saltfile + ".salt" if not saltfile.endswith(".salt") else saltfile, "rb").read()
 
-def check_password(password: str, confirm_password: str) -> bool:
-    if password != confirm_password:
-        print("Passwords do not match. Please try again.")
-        return False
+def check_password(password: str) -> bool:
     if len(password) < 8:
-        print("Password is too short. Please use at least 8 characters.")
+        QtWidgets.QMessageBox.information(None, "Password Error", "Password must contain at least 8 characters.")
         return False
-    if not any (char.isdigit() for char in password):
-        print("Password must contain at least one digit.")
+    if not any(char.isdigit() for char in password):
+        QtWidgets.QMessageBox.information(None, "Password Error", "Password must contain at least one digit.")
         return False
-    if not any (char.isupper() for char in password):
-        print("Password must contain at least one uppercase letter.")
+    if not any(char.isupper() for char in password):
+        QtWidgets.QMessageBox.information(None, "Password Error", "Password must contain at least one uppercase letter.")
         return False
-    if not any (char.islower() for char in password):
-        print("Password must contain at least one lowercase letter.")
+    if not any(char.islower() for char in password):
+        QtWidgets.QMessageBox.information(None, "Password Error", "Password must contain at least one lowercase letter.")
         return False
-    if not any (char in '!@#$%^&*()-_=+[]{}|;:,.<>?/' for char in password):
-        print("Password must contain at least one special character.")
+    if not any(char in '!@#$%^&*()-_=+[]{}|;:,.<>?/' for char in password):
+        QtWidgets.QMessageBox.information(None, "Password Error", "Password must contain at least one special character.")
         return False
     return True
+
 
 def encrypt(filename):
     """Encrypt a file using Fernet symmetric encryption."""
     if not os.path.exists(filename):
-        print(f"File '{filename}' does not exist.")
+        dm.encryptFileNotFound()
         return None
     if filename.endswith('.enc'):
-        print("You have already previously encrypted this file.")
+        dm.encryptAlreadyEncrypted()
         return None
-
-    password = getpass("Please input a strong password to generate the key for encryption: ")
-    confirm_password = getpass("Please confirm your password: ")
-    while not check_password(password, confirm_password):
-        password = getpass("Please input a strong password to generate the key for encryption: ")
-        confirm_password = getpass("Please confirm your password: ")
+    password = dm.encryptGetPassword();
+    while not check_password(password):
+        password = dm.encryptGetPassword();
     salt = os.urandom(32)
     key = generate_key(password, salt)
     saltfile = filename + ".salt"
@@ -82,7 +83,7 @@ def encrypt(filename):
     return None
 
 
-def decrypt(filename):
+def decrypt(filename, saltfile):
     """Decrypt a file using Fernet symmetric encryption."""
     if not os.path.exists(filename):
         print(f"File {filename} does not exist.")
@@ -90,9 +91,7 @@ def decrypt(filename):
     if not filename.endswith('.enc'):
         print("The file is not encrypted (missing .enc extension).")
         return None
-    print("Please input the saltfile you want to use to decrypt the file:")
     try:
-        saltfile = input()
         salt = load_salt(saltfile)
     except FileNotFoundError:
         print("Salt file not found. Decryption cannot proceed.")
@@ -114,19 +113,3 @@ def decrypt(filename):
         return None
     return None
 
-
-if __name__ == "__main__":
-    while True:
-        print("Would you like to (e)ncrypt or (d)ecrypt a file? (Type 'exit' to quit)")
-        action = input().lower()
-        if action == 'exit':
-            break
-        while action != 'e' and action != 'd':
-            print("This is not a valid option. Please choose (e)ncrypt or (d)ecrypt:")
-            action = input().lower()
-        print(f"Please input the filename you would like to {'encrypt' if action == 'e' else 'decrypt'}:")
-        file = input()
-        if action == 'e':
-            encrypt(file)
-        else:
-            decrypt(file)
