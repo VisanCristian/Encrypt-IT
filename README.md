@@ -1,6 +1,6 @@
 # Encrypt-IT
 
->> DISCLAIMER: This project was made for fun and learning purposes. Please do not use it for illegal purposes :)
+>> DISCLAIMER: This project was made for fun and learning purposes. Please do not use it for anything illegal :)
 
 This is a simple command-line tool (for now) that allows file encryption and decryption
 using symmetric encryption (Fernet) from the `cryptography` library in Python
@@ -23,7 +23,7 @@ using symmetric encryption (Fernet) from the `cryptography` library in Python
 
 ### Running the program on Windows:
 - First, run the `install.bat` file using `call setup.bat` 
-- After that, simply run `main.py` with your python itnerpreter.
+- After that, simply run `main.py` with your python interpreter.
 
 
 
