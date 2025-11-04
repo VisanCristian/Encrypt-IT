@@ -29,7 +29,7 @@ pip install --upgrade pip
 
 # Install requirements
 
-if [ -f "requirements.txt " ]; then
+if [ -f "requirements.txt" ]; then
   echo "Installing requirements from requirements.txt..."
   pip install -r requirements.txt
 else
@@ -39,4 +39,4 @@ fi
 
 echo "Setup complete! You can now run the program with:"
 echo " source .venv/bin/activate"
-echo " python main.py"
+echo " python3 main.py"
