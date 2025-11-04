@@ -1,5 +1,6 @@
 import os
 import base64
+import zipfile
 
 from PyQt5 import QtWidgets
 from cryptography.fernet import Fernet
@@ -52,18 +53,31 @@ def encrypt(filename):
     if filename.endswith('.enc'):
         dm.encryptAlreadyEncrypted()
         return None
+
     password = dm.encryptGetPassword();
     while not check_password(password):
         password = dm.encryptGetPassword();
+
     salt = os.urandom(32)
     key = generate_key(password, salt)
-    saltfile = filename + ".salt"
+
+
+    folder = os.path.dirname(filename)
+    saltfile = os.path.join(folder, os.path.basename(filename) + ".salt")
+    encrypted_filename = os.path.join(folder, os.path.basename(filename) + ".enc")
+    zip_filename = os.path.join(folder, os.path.basename(filename) + ".zip")
+
+
+    count = 0
+    while os.path.exists(zip_filename):
+        zip_filename = filename + str(count) + ".zip"
+        count += 1
+
+
     if os.path.exists(saltfile):
-        print(f"Salt file {saltfile} already exists. Do you want to Overwrite it? (y/n)")
-        overwrite = input().lower()
+        overwrite = dm.encryptSaltFileExists();
         while overwrite != 'y' and overwrite != 'n':
-            print("This is not a valid option. Please choose (y)es or (n)o:")
-            overwrite = input().lower()
+            overwrite = dm.encryptSaltFileExists();
         if overwrite == 'y':
             os.remove(saltfile)
 
@@ -75,28 +89,41 @@ def encrypt(filename):
     with open(saltfile, "wb") as sf:
         sf.write(salt)
     os.chmod(saltfile, 0o600)
-    print(f"Salt saved to '{saltfile}'. You need this file in order to decrypt the file later.")
+    dm.saltGenerated();
+
+
     with open(filename + ".enc", "wb") as encrypted_file:
         encrypted_file.write(encrypted_data)
     os.chmod(filename + ".enc", 0o600)
-    print("Encryption successful.")
+
+    try:
+        with zipfile.ZipFile(zip_filename, 'w') as zipf:
+            zipf.write(encrypted_filename, arcname=os.path.basename(encrypted_filename))
+            zipf.write(saltfile, arcname=os.path.basename(saltfile))
+    except Exception:
+        dm.encryptFailed()
+        if os.path.exists(zip_filename):
+            os.remove(zip_filename)
+    if os.path.exists(encrypted_filename):
+        os.remove(encrypted_filename)
+    if os.path.exists(saltfile):
+        os.remove(saltfile)
+
+    dm.encryptSuccessful()
     return None
 
 
 def decrypt(filename, saltfile):
     """Decrypt a file using Fernet symmetric encryption."""
     if not os.path.exists(filename):
-        print(f"File {filename} does not exist.")
-        return None
-    if not filename.endswith('.enc'):
-        print("The file is not encrypted (missing .enc extension).")
+        dm.decryptFileNotFound()
         return None
     try:
         salt = load_salt(saltfile)
     except FileNotFoundError:
-        print("Salt file not found. Decryption cannot proceed.")
+        dm.decryptSaltFileNotFound()
         return None
-    password = getpass("Please input the password:")
+    password = dm.decryptGetPassword();
     key = generate_key(password, salt)
     fernet = Fernet(key)
     with open(filename, "rb") as file_to_decrypt:
@@ -105,9 +132,9 @@ def decrypt(filename, saltfile):
         decrypted_data = fernet.decrypt(encrypted_data)
         with open(filename.replace(".enc", ""), "wb") as decrypted_file:
             decrypted_file.write(decrypted_data)
-        print("Decryption successful.")
+            dm.decryptSuccessful()
     except Exception:
-        print("Decryption failed. Please check your password and salt file.")
+        dm.decryptFailed();
         if os.path.exists(filename.replace(".enc", "")):
             os.remove(filename.replace(".enc", ""))
         return None
