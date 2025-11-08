@@ -22,7 +22,7 @@ using symmetric encryption (Fernet) from the `cryptography` library in Python
 - For now, you can do it using zsh, exactly how you would do it on a Linux machine.
 
 ### Running the program on Windows:
-- First, run the `install.bat` file using `call setup.bat` 
+- First, run the `install.bat` file using `call install.bat`
 - After that, simply run `main.py` with your python interpreter.
 
 
